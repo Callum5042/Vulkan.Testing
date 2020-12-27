@@ -131,12 +131,13 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>E:\SDL2-2.0.12\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:\SDL2-2.0.12\include;E:\1.2.162.0\VulkanSDK\Include\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>E:\SDL2-2.0.12\lib\x64\SDL2.lib;E:\SDL2-2.0.12\lib\x64\SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>E:\SDL2-2.0.12\lib\x64\SDL2.lib;E:\SDL2-2.0.12\lib\x64\SDL2main.lib;vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>E:\1.2.162.0\VulkanSDK\Lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -148,14 +149,15 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>E:\SDL2-2.0.12\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:\SDL2-2.0.12\include;E:\1.2.162.0\VulkanSDK\Include\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>E:\SDL2-2.0.12\lib\x64\SDL2.lib;E:\SDL2-2.0.12\lib\x64\SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>E:\SDL2-2.0.12\lib\x64\SDL2.lib;E:\SDL2-2.0.12\lib\x64\SDL2main.lib;vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>E:\1.2.162.0\VulkanSDK\Lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
