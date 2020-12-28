@@ -24,7 +24,9 @@ private:
 	VkSurfaceKHR m_VkSurfaceKHR;
 	void CreateVkInstance();
 
-
+	// Vulkan physical device
+	VkPhysicalDevice m_VkPhysicalDevice;
+	void PickPhysicalDevice();
 };
 
 //class VkRenderer

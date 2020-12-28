@@ -18,14 +18,14 @@ VkRenderer::VkRenderer(SDL_Window* window) : m_Window(window)
 
 VkRenderer::~VkRenderer()
 {
-	//vkDestroySurfaceKHR(m_VkInstance, m_VkSurfaceKHR, nullptr);
+	vkDestroySurfaceKHR(m_VkInstance, m_VkSurfaceKHR, nullptr);
 	vkDestroyInstance(m_VkInstance, nullptr);
 }
 
 bool VkRenderer::Create()
 {
 	CreateVkInstance();
-	
+	PickPhysicalDevice();
 
 	std::cout << "Success\n";
 	return true;
@@ -79,4 +79,27 @@ void VkRenderer::CreateVkInstance()
 	{
 		std::cout << "Could not create a Vulkan surface." << std::endl;
 	}
+}
+
+void VkRenderer::PickPhysicalDevice()
+{
+	// Get all physical devices
+	uint32_t deviceCount = 0;
+	vkEnumeratePhysicalDevices(m_VkInstance, &deviceCount, nullptr);
+
+	std::vector<VkPhysicalDevice> devices(deviceCount);
+	vkEnumeratePhysicalDevices(m_VkInstance, &deviceCount, devices.data());
+
+	// Set physical device to default
+	m_VkPhysicalDevice = devices[0];
+
+	// Device properties
+	VkPhysicalDeviceProperties deviceProperties;
+	vkGetPhysicalDeviceProperties(m_VkPhysicalDevice, &deviceProperties);
+
+	VkPhysicalDeviceFeatures deviceFeatures;
+	vkGetPhysicalDeviceFeatures(m_VkPhysicalDevice, &deviceFeatures);
+
+	// Print GPU name
+	std::cout << deviceProperties.deviceName << '\n';
 }
