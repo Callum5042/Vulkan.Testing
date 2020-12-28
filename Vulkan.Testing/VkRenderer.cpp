@@ -102,7 +102,7 @@ void VkRenderer::CreateDevice()
 	device_info.pNext = nullptr;
 	device_info.queueCreateInfoCount = 1;
 	device_info.pQueueCreateInfos = &queue_info;
-	device_info.enabledExtensionCount = device_extensions.size();
+	device_info.enabledExtensionCount = (uint32_t)device_extensions.size();
 	device_info.ppEnabledExtensionNames = device_extensions.data();
 	device_info.enabledLayerCount = 0;
 	device_info.ppEnabledLayerNames = nullptr;
@@ -265,4 +265,34 @@ void VkRenderer::CreateSwapchain()
 	}
 
 	Vk::Check(vkCreateSwapchainKHR(m_VkDevice, &swapchain_ci, nullptr, &m_VkSwapchain));
+
+	// Create image view
+	auto swapchain_image_count = 0u;
+	Vk::Check(vkGetSwapchainImagesKHR(m_VkDevice, m_VkSwapchain, &swapchain_image_count, NULL));
+
+	std::vector<VkImage> images(swapchain_image_count);
+	Vk::Check(vkGetSwapchainImagesKHR(m_VkDevice, m_VkSwapchain, &swapchain_image_count, images.data()));
+
+	m_VkImageViews.resize(swapchain_image_count);
+	for (uint32_t i = 0; i < swapchain_image_count; i++)
+	{
+		VkImageViewCreateInfo color_image_view = {};
+		color_image_view.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		color_image_view.pNext = NULL;
+		color_image_view.flags = 0;
+		color_image_view.image = images[i];
+		color_image_view.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		color_image_view.format = format;
+		color_image_view.components.r = VK_COMPONENT_SWIZZLE_R;
+		color_image_view.components.g = VK_COMPONENT_SWIZZLE_G;
+		color_image_view.components.b = VK_COMPONENT_SWIZZLE_B;
+		color_image_view.components.a = VK_COMPONENT_SWIZZLE_A;
+		color_image_view.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		color_image_view.subresourceRange.baseMipLevel = 0;
+		color_image_view.subresourceRange.levelCount = 1;
+		color_image_view.subresourceRange.baseArrayLayer = 0;
+		color_image_view.subresourceRange.layerCount = 1;
+
+		Vk::Check(vkCreateImageView(m_VkDevice, &color_image_view, NULL, &m_VkImageViews[i]));
+	}
 }

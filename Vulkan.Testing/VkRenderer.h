@@ -39,5 +39,6 @@ private:
 	// Swapchain
 	VkSurfaceKHR m_VkSurface;
 	VkSwapchainKHR m_VkSwapchain;
+	std::vector<VkImageView> m_VkImageViews;
 	void CreateSwapchain();
 };
