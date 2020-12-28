@@ -17,5 +17,6 @@ private:
 
 	// Vulkan instance
 	VkInstance m_VkInstance;
+	VkSurfaceKHR m_VkSurface;
 	bool CreateVkInstance();
 };
