@@ -4,7 +4,7 @@
 
 #include <SDL.h>
 #include "Timer.h"
-#include "Renderer.h"
+#include "VkRenderer.h"
 
 namespace
 {
@@ -50,7 +50,7 @@ int main(int argc, char** argv)
 	}
 
 	// Vulkan
-	Renderer renderer(window);
+	VkRenderer renderer(window);
 	if (!renderer.Create())
 	{
 		return -1;
