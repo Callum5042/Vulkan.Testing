@@ -19,8 +19,7 @@ private:
 
 	// Vulkan instance
 	VkInstance m_VkInstance;
-	VkSurfaceKHR m_VkSurface;
-	bool CreateInstanceAndSurface();
+	bool CreateInstance();
 
 	// Physical devices
 	std::vector<VkPhysicalDevice> m_PhysicalDevices;
@@ -36,4 +35,9 @@ private:
 	VkCommandPool m_VkCommandPool;
 	VkCommandBuffer m_VkCommandBuffer;
 	void CreateCommandBuffer();
+
+	// Swapchain
+	VkSurfaceKHR m_VkSurface;
+	VkSwapchainKHR m_VkSwapchain;
+	void CreateSwapchain();
 };
