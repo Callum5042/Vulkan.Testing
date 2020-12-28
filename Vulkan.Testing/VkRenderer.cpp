@@ -1,5 +1,6 @@
 #include "VkRenderer.h"
 #include <iostream>
+#include <optional>
 
 namespace Vk
 {
@@ -102,4 +103,27 @@ void VkRenderer::PickPhysicalDevice()
 
 	// Print GPU name
 	std::cout << deviceProperties.deviceName << '\n';
+
+	// Queue families
+	uint32_t queueFamilyCount = 0;
+	vkGetPhysicalDeviceQueueFamilyProperties(m_VkPhysicalDevice, &queueFamilyCount, nullptr);
+
+	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+	vkGetPhysicalDeviceQueueFamilyProperties(m_VkPhysicalDevice, &queueFamilyCount, queueFamilies.data());
+
+	// Find graphic queue for graphics
+	std::optional<uint32_t> graphicsFamily;
+	for (size_t i = 0; i < queueFamilies.size(); i++)
+	{
+		if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+		{
+			graphicsFamily = (uint32_t)i;
+			break;
+		}
+	}
+
+	if (!graphicsFamily.has_value())
+	{
+		std::cout << "No graphics queue found\n";
+	}
 }
