@@ -23,7 +23,7 @@ bool VkRenderer::Create()
 	CreateDevice();
 	CreateCommandBuffer();
 	CreateSwapchain();
-	CreateDepthBuffer();
+	//CreateDepthBuffer();
 
 	return true;
 }
@@ -54,6 +54,7 @@ bool VkRenderer::CreateInstance()
 
 	// Create the Vulkan instance
 	VkInstanceCreateInfo create_info = {};
+	create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	create_info.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 	create_info.ppEnabledExtensionNames = extensions.data();
 
