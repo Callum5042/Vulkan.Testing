@@ -23,6 +23,7 @@ bool VkRenderer::Create()
 	CreateDevice();
 	CreateCommandBuffer();
 	CreateSwapchain();
+	CreateDepthBuffer();
 
 	return true;
 }
@@ -47,10 +48,17 @@ bool VkRenderer::CreateInstance()
 		return false;
 	}
 
+	// Validation layer
+	const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
+
+
 	// Create the Vulkan instance
 	VkInstanceCreateInfo create_info = {};
 	create_info.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 	create_info.ppEnabledExtensionNames = extensions.data();
+
+	create_info.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+	create_info.ppEnabledLayerNames = validationLayers.data();
 
 	Vk::Check(vkCreateInstance(&create_info, nullptr, &m_VkInstance));
 	return true;
@@ -295,4 +303,124 @@ void VkRenderer::CreateSwapchain()
 
 		Vk::Check(vkCreateImageView(m_VkDevice, &color_image_view, NULL, &m_VkImageViews[i]));
 	}
+}
+
+void VkRenderer::CreateDepthBuffer()
+{
+	VkImageCreateInfo image_info = {};
+	const VkFormat depth_format = VK_FORMAT_D16_UNORM;
+	VkFormatProperties props;
+
+	vkGetPhysicalDeviceFormatProperties(m_PhysicalDevices[0], depth_format, &props);
+	if (props.linearTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) 
+	{
+		image_info.tiling = VK_IMAGE_TILING_LINEAR;
+	}
+	else if (props.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) 
+	{
+		image_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+	}
+	else 
+	{
+		/* Try other depth formats? */
+		std::cout << "VK_FORMAT_D16_UNORM Unsupported.\n";
+		exit(-1);
+	}
+
+	// Get surface capailities
+	VkSurfaceCapabilitiesKHR surface_capabilities;
+	Vk::Check(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_PhysicalDevices[0], m_VkSurface, &surface_capabilities));
+
+	auto width = 0;
+	auto height = 0;
+	SDL_Vulkan_GetDrawableSize(m_Window, &width, &height);
+
+	width = std::clamp(static_cast<uint32_t>(width), surface_capabilities.minImageExtent.width, surface_capabilities.maxImageExtent.width);
+	height = std::clamp(static_cast<uint32_t>(height), surface_capabilities.minImageExtent.height, surface_capabilities.maxImageExtent.height);
+
+	image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	image_info.pNext = NULL;
+	image_info.imageType = VK_IMAGE_TYPE_2D;
+	image_info.format = depth_format;
+	image_info.extent.width = width;
+	image_info.extent.height = height;
+	image_info.extent.depth = 1;
+	image_info.mipLevels = 1;
+	image_info.arrayLayers = 1;
+	image_info.samples = VK_SAMPLE_COUNT_1_BIT;
+	image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	image_info.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+	image_info.queueFamilyIndexCount = 0;
+	image_info.pQueueFamilyIndices = NULL;
+	image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	image_info.flags = 0;
+
+	VkMemoryAllocateInfo mem_alloc = {};
+	mem_alloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	mem_alloc.pNext = NULL;
+	mem_alloc.allocationSize = 0;
+	mem_alloc.memoryTypeIndex = 0;
+
+	VkImageViewCreateInfo view_info = {};
+	view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	view_info.pNext = NULL;
+	view_info.image = VK_NULL_HANDLE;
+	view_info.format = depth_format;
+	view_info.components.r = VK_COMPONENT_SWIZZLE_R;
+	view_info.components.g = VK_COMPONENT_SWIZZLE_G;
+	view_info.components.b = VK_COMPONENT_SWIZZLE_B;
+	view_info.components.a = VK_COMPONENT_SWIZZLE_A;
+	view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+	view_info.subresourceRange.baseMipLevel = 0;
+	view_info.subresourceRange.levelCount = 1;
+	view_info.subresourceRange.baseArrayLayer = 0;
+	view_info.subresourceRange.layerCount = 1;
+	view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	view_info.flags = 0;
+
+
+	/* Create image */
+	VkImage depth_image;
+	Vk::Check(vkCreateImage(m_VkDevice, &image_info, NULL, &depth_image));
+
+	VkMemoryRequirements mem_reqs;
+	vkGetImageMemoryRequirements(m_VkDevice, depth_image, &mem_reqs);
+
+	mem_alloc.allocationSize = mem_reqs.size;
+
+	/* Use the memory properties to determine the type of memory required */
+	VkPhysicalDeviceMemoryProperties memory_properties;
+	vkGetPhysicalDeviceMemoryProperties(m_PhysicalDevices[0], &memory_properties);
+
+	VkPhysicalDeviceProperties gpu_props;
+	vkGetPhysicalDeviceProperties(m_PhysicalDevices[0], &gpu_props);
+
+	auto memory_type_index = 0;
+	for (uint32_t i = 0; i < memory_properties.memoryTypeCount; i++) 
+	{
+		if ((mem_reqs.memoryTypeBits & 1) == 1)
+		{
+			// Type is available, does it match user properties?
+			if ((memory_properties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) == VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+			{
+				memory_type_index = i;
+				break;
+			}
+		}
+
+		mem_reqs.memoryTypeBits >>= 1;
+	}
+
+	/* Allocate memory */
+	VkDeviceMemory memory;
+	Vk::Check(vkAllocateMemory(m_VkDevice, &mem_alloc, NULL, &memory));
+
+	/* Bind memory */
+	Vk::Check(vkBindImageMemory(m_VkDevice, depth_image, memory, 0));
+
+	/* Create image view */
+	view_info.image = depth_image;
+
+	VkImageView m_VkImageView;
+	Vk::Check(vkCreateImageView(m_VkDevice, &view_info, NULL, &m_VkImageView));
 }

@@ -41,4 +41,7 @@ private:
 	VkSwapchainKHR m_VkSwapchain;
 	std::vector<VkImageView> m_VkImageViews;
 	void CreateSwapchain();
+
+	// Depth buffer
+	void CreateDepthBuffer();
 };
