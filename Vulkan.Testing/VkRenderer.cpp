@@ -21,6 +21,7 @@ bool VkRenderer::Create()
 	CreateInstanceAndSurface();
 	QueryPhysicalDevices();
 	CreateDevice();
+	CreateCommandBuffer();
 
 	return true;
 }
@@ -88,6 +89,7 @@ void VkRenderer::CreateDevice()
 		if (m_QueueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
 		{
 			queue_info.queueFamilyIndex = i;
+			m_QueueFamilyIndex = queue_info.queueFamilyIndex;
 			found = true;
 			break;
 		}
@@ -102,14 +104,36 @@ void VkRenderer::CreateDevice()
 	// Create device
 	VkDeviceCreateInfo device_info = {};
 	device_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-	device_info.pNext = NULL;
+	device_info.pNext = nullptr;
 	device_info.queueCreateInfoCount = 1;
 	device_info.pQueueCreateInfos = &queue_info;
 	device_info.enabledExtensionCount = 0;
-	device_info.ppEnabledExtensionNames = NULL;
+	device_info.ppEnabledExtensionNames = nullptr;
 	device_info.enabledLayerCount = 0;
-	device_info.ppEnabledLayerNames = NULL;
-	device_info.pEnabledFeatures = NULL;
+	device_info.ppEnabledLayerNames = nullptr;
+	device_info.pEnabledFeatures = nullptr;
 
-	Vk::Check(vkCreateDevice(m_PhysicalDevices[0], &device_info, NULL, &m_VkDevice));
+	Vk::Check(vkCreateDevice(m_PhysicalDevices[0], &device_info, nullptr, &m_VkDevice));
+}
+
+void VkRenderer::CreateCommandBuffer()
+{
+	// Create command pool
+	VkCommandPoolCreateInfo cmd_pool_info = {};
+	cmd_pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	cmd_pool_info.pNext = nullptr;
+	cmd_pool_info.queueFamilyIndex = m_QueueFamilyIndex;
+	cmd_pool_info.flags = 0;
+
+	Vk::Check(vkCreateCommandPool(m_VkDevice, &cmd_pool_info, nullptr, &m_VkCommandPool));
+
+	// Allocate command buffers
+	VkCommandBufferAllocateInfo cmd = {};
+	cmd.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	cmd.pNext = NULL;
+	cmd.commandPool = m_VkCommandPool;
+	cmd.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	cmd.commandBufferCount = 1;
+
+	Vk::Check(vkAllocateCommandBuffers(m_VkDevice, &cmd, &m_VkCommandBuffer));
 }

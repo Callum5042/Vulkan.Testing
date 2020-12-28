@@ -5,6 +5,7 @@
 #include <SDL.h>
 #include <SDL_vulkan.h>
 #include <vulkan/vulkan.hpp>
+typedef unsigned int uint;
 
 class VkRenderer
 {
@@ -27,6 +28,12 @@ private:
 
 	// Logical device
 	std::vector<VkQueueFamilyProperties> m_QueueFamilyProperties;
+	uint m_QueueFamilyIndex = 0;
 	VkDevice m_VkDevice;
 	void CreateDevice();
+
+	// Command buffer
+	VkCommandPool m_VkCommandPool;
+	VkCommandBuffer m_VkCommandBuffer;
+	void CreateCommandBuffer();
 };
