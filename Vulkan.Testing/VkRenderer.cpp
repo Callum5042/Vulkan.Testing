@@ -39,6 +39,11 @@ VkRenderer::VkRenderer(SDL_Window* window) : m_Window(window)
 
 VkRenderer::~VkRenderer()
 {
+	for (auto framebuffer : m_SwapChainFramebuffers) 
+	{
+		vkDestroyFramebuffer(m_VkDevice, framebuffer, nullptr);
+	}
+
 	vkDestroyPipeline(m_VkDevice, m_VkPipeline, nullptr);
 	vkDestroyPipelineLayout(m_VkDevice, m_PipelineLayout, nullptr);
 	vkDestroyRenderPass(m_VkDevice, m_RenderPass, nullptr);
@@ -62,6 +67,7 @@ bool VkRenderer::Create()
 	CreateImageViews();
 	CreateRenderPass();
 	CreateGraphicsPipeline();
+	CreateFramebuffers();
 
 	std::cout << "Success\n";
 	return true;
@@ -539,4 +545,27 @@ void VkRenderer::CreateRenderPass()
 	renderPassInfo.pSubpasses = &subpass;
 
 	Vk::Check(vkCreateRenderPass(m_VkDevice, &renderPassInfo, nullptr, &m_RenderPass));
+}
+
+void VkRenderer::CreateFramebuffers()
+{
+	m_SwapChainFramebuffers.resize(m_SwapChainImageViews.size());
+
+	for (size_t i = 0; i < m_SwapChainImageViews.size(); i++) 
+	{
+		VkImageView attachments[] = {
+			m_SwapChainImageViews[i]
+		};
+
+		VkFramebufferCreateInfo framebufferInfo{};
+		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferInfo.renderPass = m_RenderPass;
+		framebufferInfo.attachmentCount = 1;
+		framebufferInfo.pAttachments = attachments;
+		framebufferInfo.width = m_Extent.width;
+		framebufferInfo.height = m_Extent.height;
+		framebufferInfo.layers = 1;
+
+		Vk::Check(vkCreateFramebuffer(m_VkDevice, &framebufferInfo, nullptr, &m_SwapChainFramebuffers[i]));
+	}
 }

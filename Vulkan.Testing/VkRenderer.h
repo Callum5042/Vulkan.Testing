@@ -64,4 +64,8 @@ private:
 	void CreateRenderPass();
 
 	VkPipeline m_VkPipeline;
+
+	// Framebuffers
+	std::vector<VkFramebuffer> m_SwapChainFramebuffers;
+	void CreateFramebuffers();
 };
