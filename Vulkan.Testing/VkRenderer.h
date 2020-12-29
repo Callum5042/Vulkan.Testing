@@ -43,8 +43,16 @@ private:
 	VkSurfaceCapabilitiesKHR m_Capabilities;
 	std::vector<VkSurfaceFormatKHR> m_Formats;
 	std::vector<VkPresentModeKHR> m_PresentModes;
+	VkPresentModeKHR m_PresentMode;
+	VkSurfaceFormatKHR m_Format;
 	VkSwapchainKHR m_VkSwapchainKHR;
+	std::vector<VkImage> m_SwapChainImages;
 	void CreateSwapchain();
+
+	// Image view
+	std::vector<VkImageView> m_SwapChainImageViews;
+	VkImageView mVkImageView;
+	void CreateImageViews();
 };
 
 //class VkRenderer
