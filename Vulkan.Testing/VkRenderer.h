@@ -49,10 +49,19 @@ private:
 	std::vector<VkImage> m_SwapChainImages;
 	void CreateSwapchain();
 
+	VkExtent2D m_Extent;
+
 	// Image view
 	std::vector<VkImageView> m_SwapChainImageViews;
 	VkImageView mVkImageView;
 	void CreateImageViews();
+
+	// Pipeline
+	void CreateGraphicsPipeline();
+	VkShaderModule createShaderModule(const std::vector<char>& code);
+	VkRenderPass m_RenderPass;
+	VkPipelineLayout m_PipelineLayout;
+	void CreateRenderPass();
 };
 
 //class VkRenderer
