@@ -209,12 +209,51 @@ void VkRenderer::CreateSwapchain()
 	m_Formats.resize(formatCount);
 	Vk::Check(vkGetPhysicalDeviceSurfaceFormatsKHR(m_VkPhysicalDevice, m_VkSurfaceKHR, &formatCount, m_Formats.data()));
 
+	VkSurfaceFormatKHR format;
+	format = m_Formats[0];
+	for (const auto& availableFormat : m_Formats)
+	{
+		if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) 
+		{
+			format = availableFormat;
+			break;
+		}
+	}
+
 	// Get present mode counts
 	uint32_t presentModeCount;
 	Vk::Check(vkGetPhysicalDeviceSurfacePresentModesKHR(m_VkPhysicalDevice, m_VkSurfaceKHR, &presentModeCount, nullptr));
 
 	m_PresentModes.resize(presentModeCount);
 	Vk::Check(vkGetPhysicalDeviceSurfacePresentModesKHR(m_VkPhysicalDevice, m_VkSurfaceKHR, &presentModeCount, m_PresentModes.data()));
+
+	VkPresentModeKHR presentMode;
+	presentMode = m_PresentModes[0];
+
+	// SDL THING
+	auto width = 0, height = 0;
+	SDL_Vulkan_GetDrawableSize(m_Window, &width, &height);
+
+	width = std::clamp((uint32_t)width, m_Capabilities.minImageExtent.width, m_Capabilities.maxImageExtent.width);
+	height = std::clamp((uint32_t)height, m_Capabilities.minImageExtent.height, m_Capabilities.maxImageExtent.height);
+
+	VkExtent2D extent =
+	{
+		static_cast<uint32_t>(width),
+		static_cast<uint32_t>(height)
+	};
+
+	// Create the swapchain
+	VkSwapchainCreateInfoKHR createInfo{};
+	createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+	createInfo.surface = m_VkSurfaceKHR;
+
+	createInfo.minImageCount = m_Capabilities.minImageCount + 1;
+	createInfo.imageFormat = format.format;
+	createInfo.imageColorSpace = format.colorSpace;
+	createInfo.imageExtent = extent;
+	createInfo.imageArrayLayers = 1;
+	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
 
 }
