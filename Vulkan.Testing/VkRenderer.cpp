@@ -39,6 +39,7 @@ VkRenderer::VkRenderer(SDL_Window* window) : m_Window(window)
 
 VkRenderer::~VkRenderer()
 {
+	vkDestroyPipeline(m_VkDevice, m_VkPipeline, nullptr);
 	vkDestroyPipelineLayout(m_VkDevice, m_PipelineLayout, nullptr);
 	vkDestroyRenderPass(m_VkDevice, m_RenderPass, nullptr);
 	for (auto imageView : m_SwapChainImageViews)
@@ -466,6 +467,28 @@ void VkRenderer::CreateGraphicsPipeline()
 	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
 	Vk::Check(vkCreatePipelineLayout(m_VkDevice, &pipelineLayoutInfo, nullptr, &m_PipelineLayout));
+
+	// Create pipeline
+	VkGraphicsPipelineCreateInfo pipelineInfo{};
+	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	pipelineInfo.stageCount = 2;
+	pipelineInfo.pStages = shaderStages;
+
+	pipelineInfo.pVertexInputState = &vertexInputInfo;
+	pipelineInfo.pInputAssemblyState = &inputAssembly;
+	pipelineInfo.pViewportState = &viewportState;
+	pipelineInfo.pRasterizationState = &rasterizer;
+	pipelineInfo.pMultisampleState = &multisampling;
+	pipelineInfo.pDepthStencilState = nullptr; // Optional
+	pipelineInfo.pColorBlendState = &colorBlending;
+	pipelineInfo.pDynamicState = nullptr; // Optional
+	pipelineInfo.layout = m_PipelineLayout;
+	pipelineInfo.renderPass = m_RenderPass;
+	pipelineInfo.subpass = 0;
+	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
+	pipelineInfo.basePipelineIndex = -1; // Optional
+
+	Vk::Check(vkCreateGraphicsPipelines(m_VkDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_VkPipeline));
 
 	// Cleanup at the end
 	vkDestroyShaderModule(m_VkDevice, fragShaderModule, nullptr);
