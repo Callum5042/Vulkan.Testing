@@ -39,6 +39,7 @@ VkRenderer::VkRenderer(SDL_Window* window) : m_Window(window)
 
 VkRenderer::~VkRenderer()
 {
+	vkDestroyCommandPool(m_VkDevice, m_VkCommandPool, nullptr);
 	for (auto framebuffer : m_SwapChainFramebuffers) 
 	{
 		vkDestroyFramebuffer(m_VkDevice, framebuffer, nullptr);
@@ -68,6 +69,8 @@ bool VkRenderer::Create()
 	CreateRenderPass();
 	CreateGraphicsPipeline();
 	CreateFramebuffers();
+	CreateCommandPool();
+	CreateCommandBuffers();
 
 	std::cout << "Success\n";
 	return true;
@@ -567,5 +570,61 @@ void VkRenderer::CreateFramebuffers()
 		framebufferInfo.layers = 1;
 
 		Vk::Check(vkCreateFramebuffer(m_VkDevice, &framebufferInfo, nullptr, &m_SwapChainFramebuffers[i]));
+	}
+}
+
+void VkRenderer::CreateCommandPool()
+{
+	VkCommandPoolCreateInfo poolInfo{};
+	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	poolInfo.queueFamilyIndex = m_GraphicsFamily.value();
+	poolInfo.flags = 0; // Optional
+
+	Vk::Check(vkCreateCommandPool(m_VkDevice, &poolInfo, nullptr, &m_VkCommandPool));
+}
+
+void VkRenderer::CreateCommandBuffers()
+{
+	// Create buffer
+	m_CommandBuffers.resize(m_SwapChainFramebuffers.size());
+
+	VkCommandBufferAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.commandPool = m_VkCommandPool;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandBufferCount = (uint32_t)m_CommandBuffers.size();
+
+	Vk::Check(vkAllocateCommandBuffers(m_VkDevice, &allocInfo, m_CommandBuffers.data()));
+
+	// Record command buffer
+	for (size_t i = 0; i < m_CommandBuffers.size(); i++)
+	{
+		VkCommandBufferBeginInfo beginInfo{};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags = 0; // Optional
+		beginInfo.pInheritanceInfo = nullptr; // Optional
+
+		Vk::Check(vkBeginCommandBuffer(m_CommandBuffers[i], &beginInfo));
+
+		// Render pass
+		VkRenderPassBeginInfo renderPassInfo{};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderPassInfo.renderPass = m_RenderPass;
+		renderPassInfo.framebuffer = m_SwapChainFramebuffers[i];
+		renderPassInfo.renderArea.offset = { 0, 0 };
+		renderPassInfo.renderArea.extent = m_Extent;
+
+		VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+		renderPassInfo.clearValueCount = 1;
+		renderPassInfo.pClearValues = &clearColor;
+
+		vkCmdBeginRenderPass(m_CommandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		// Bind to pipeline
+		vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_VkPipeline);
+		vkCmdDraw(m_CommandBuffers[i], 3, 1, 0, 0);
+		vkCmdEndRenderPass(m_CommandBuffers[i]);
+
+		Vk::Check(vkEndCommandBuffer(m_CommandBuffers[i]));
 	}
 }

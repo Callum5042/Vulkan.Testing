@@ -164,7 +164,6 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="VkRenderer.cpp" />
-    <ClCompile Include="VkRenderer1.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Timer.h" />

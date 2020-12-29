@@ -24,9 +24,6 @@
     <ClCompile Include="Timer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="VkRenderer1.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="VkRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

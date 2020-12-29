@@ -68,4 +68,12 @@ private:
 	// Framebuffers
 	std::vector<VkFramebuffer> m_SwapChainFramebuffers;
 	void CreateFramebuffers();
+
+	// Command pool
+	VkCommandPool m_VkCommandPool;
+	void CreateCommandPool();
+
+	// Command buffers
+	std::vector<VkCommandBuffer> m_CommandBuffers;
+	void CreateCommandBuffers();
 };
