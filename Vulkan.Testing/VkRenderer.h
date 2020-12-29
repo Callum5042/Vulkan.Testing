@@ -43,6 +43,7 @@ private:
 	VkSurfaceCapabilitiesKHR m_Capabilities;
 	std::vector<VkSurfaceFormatKHR> m_Formats;
 	std::vector<VkPresentModeKHR> m_PresentModes;
+	VkSwapchainKHR m_VkSwapchainKHR;
 	void CreateSwapchain();
 };
 

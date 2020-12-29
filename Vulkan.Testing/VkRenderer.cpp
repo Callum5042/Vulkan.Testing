@@ -19,6 +19,7 @@ VkRenderer::VkRenderer(SDL_Window* window) : m_Window(window)
 
 VkRenderer::~VkRenderer()
 {
+	vkDestroySwapchainKHR(m_VkDevice, m_VkSwapchainKHR, nullptr);
 	vkDestroyDevice(m_VkDevice, nullptr);
 	vkDestroySurfaceKHR(m_VkInstance, m_VkSurfaceKHR, nullptr);
 	vkDestroyInstance(m_VkInstance, nullptr);
@@ -255,5 +256,25 @@ void VkRenderer::CreateSwapchain()
 	createInfo.imageArrayLayers = 1;
 	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
+	uint32_t queueFamilyIndices[] = { m_GraphicsFamily.value(), m_PresentFamily.value() };
+	if (m_GraphicsFamily != m_PresentFamily) 
+	{
+		createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+		createInfo.queueFamilyIndexCount = 2;
+		createInfo.pQueueFamilyIndices = queueFamilyIndices;
+	}
+	else 
+	{
+		createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		createInfo.queueFamilyIndexCount = 0; // Optional
+		createInfo.pQueueFamilyIndices = nullptr; // Optional
+	}
 
+	createInfo.preTransform = m_Capabilities.currentTransform;
+	createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+	createInfo.presentMode = presentMode;
+	createInfo.clipped = VK_TRUE;
+	createInfo.oldSwapchain = VK_NULL_HANDLE;
+
+	Vk::Check(vkCreateSwapchainKHR(m_VkDevice, &createInfo, nullptr, &m_VkSwapchainKHR));
 }
