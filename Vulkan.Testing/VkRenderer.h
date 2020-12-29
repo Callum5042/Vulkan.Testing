@@ -15,9 +15,11 @@ public:
 	virtual ~VkRenderer();
 
 	bool Create();
+
+	void createSyncObjects();
 	void DrawFrame();
 
-private:
+//private:
 	SDL_Window* m_Window = nullptr;
 
 	// Validation layer
@@ -80,8 +82,9 @@ private:
 	void CreateCommandBuffers();
 
 	// Drawing?
-	VkSemaphore imageAvailableSemaphore;
-	VkSemaphore renderFinishedSemaphore;
-
-	void CreateSemaphores();
+	std::vector<VkSemaphore> imageAvailableSemaphores;
+	std::vector<VkSemaphore> renderFinishedSemaphores;
+	std::vector<VkFence> inFlightFences;
+	std::vector<VkFence> imagesInFlight;
+	size_t currentFrame = 0;
 };

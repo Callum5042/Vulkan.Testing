@@ -77,6 +77,8 @@ int main(int argc, char** argv)
 		}
 	}
 
+	vkDeviceWaitIdle(renderer.m_VkDevice);
+
 	// Clean up
 	SDL_DestroyWindow(window);
 	SDL_Quit();
