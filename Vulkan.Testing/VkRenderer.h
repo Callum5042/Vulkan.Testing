@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <optional>
 
 #include <SDL.h>
 #include <SDL_vulkan.h>
@@ -18,6 +19,9 @@ public:
 private:
 	SDL_Window* m_Window = nullptr;
 
+	// Validation layer
+	std::vector<const char*> m_ValidationLayers;
+
 	// Vulkan instance
 	std::vector<const char*> m_InstanceExtensions;
 	VkInstance m_VkInstance;
@@ -26,7 +30,13 @@ private:
 
 	// Vulkan physical device
 	VkPhysicalDevice m_VkPhysicalDevice;
+	std::optional<uint32_t> m_GraphicsFamily;
 	void PickPhysicalDevice();
+
+	// Vulkan device
+	VkDevice m_VkDevice;
+	VkQueue m_VkQueue;
+	void CreateLogicalDevice();
 };
 
 //class VkRenderer

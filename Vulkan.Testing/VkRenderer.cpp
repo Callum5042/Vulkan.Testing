@@ -1,6 +1,5 @@
 #include "VkRenderer.h"
 #include <iostream>
-#include <optional>
 
 namespace Vk
 {
@@ -19,6 +18,7 @@ VkRenderer::VkRenderer(SDL_Window* window) : m_Window(window)
 
 VkRenderer::~VkRenderer()
 {
+	vkDestroyDevice(m_VkDevice, nullptr);
 	vkDestroySurfaceKHR(m_VkInstance, m_VkSurfaceKHR, nullptr);
 	vkDestroyInstance(m_VkInstance, nullptr);
 }
@@ -27,6 +27,7 @@ bool VkRenderer::Create()
 {
 	CreateVkInstance();
 	PickPhysicalDevice();
+	CreateLogicalDevice();
 
 	std::cout << "Success\n";
 	return true;
@@ -51,9 +52,8 @@ void VkRenderer::CreateVkInstance()
 	m_InstanceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
 	// Use validation layers if this is a debug build
-	std::vector<const char*> validationLayers;
 #if defined(_DEBUG)
-	validationLayers.push_back("VK_LAYER_KHRONOS_validation");
+	m_ValidationLayers.push_back("VK_LAYER_KHRONOS_validation");
 #endif
 
 	// Create instance
@@ -68,8 +68,8 @@ void VkRenderer::CreateVkInstance()
 	VkInstanceCreateInfo inst_info = {};
 	inst_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	inst_info.pApplicationInfo = &app_info;
-	inst_info.enabledLayerCount = (uint32_t)validationLayers.size();
-	inst_info.ppEnabledLayerNames = validationLayers.size() ? validationLayers.data() : NULL;
+	inst_info.enabledLayerCount = (uint32_t)m_ValidationLayers.size();
+	inst_info.ppEnabledLayerNames = m_ValidationLayers.size() ? m_ValidationLayers.data() : NULL;
 	inst_info.enabledExtensionCount = (uint32_t)m_InstanceExtensions.size();
 	inst_info.ppEnabledExtensionNames = m_InstanceExtensions.data();
 
@@ -112,18 +112,48 @@ void VkRenderer::PickPhysicalDevice()
 	vkGetPhysicalDeviceQueueFamilyProperties(m_VkPhysicalDevice, &queueFamilyCount, queueFamilies.data());
 
 	// Find graphic queue for graphics
-	std::optional<uint32_t> graphicsFamily;
 	for (size_t i = 0; i < queueFamilies.size(); i++)
 	{
 		if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
 		{
-			graphicsFamily = (uint32_t)i;
+			m_GraphicsFamily = (uint32_t)i;
 			break;
 		}
 	}
 
-	if (!graphicsFamily.has_value())
+	if (!m_GraphicsFamily.has_value())
 	{
 		std::cout << "No graphics queue found\n";
 	}
+}
+
+void VkRenderer::CreateLogicalDevice()
+{
+	// Specifying the queues to be created
+	VkDeviceQueueCreateInfo queueCreateInfo{};
+	queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	queueCreateInfo.queueFamilyIndex = m_GraphicsFamily.value();
+	queueCreateInfo.queueCount = 1;
+
+	float queuePriority = 1.0f;
+	queueCreateInfo.pQueuePriorities = &queuePriority;
+
+	// Specifying device features
+	VkPhysicalDeviceFeatures deviceFeatures{};
+
+	// Creating the logical device
+	VkDeviceCreateInfo createInfo{};
+	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	createInfo.pQueueCreateInfos = &queueCreateInfo;
+	createInfo.queueCreateInfoCount = 1;
+	createInfo.pEnabledFeatures = &deviceFeatures;
+	createInfo.enabledExtensionCount = 0;
+
+	createInfo.enabledLayerCount = static_cast<uint32_t>(m_ValidationLayers.size());
+	createInfo.ppEnabledLayerNames = m_ValidationLayers.data();
+
+	Vk::Check(vkCreateDevice(m_VkPhysicalDevice, &createInfo, nullptr, &m_VkDevice));
+
+	// Get queue
+	vkGetDeviceQueue(m_VkDevice, m_GraphicsFamily.value(), 0, & m_VkQueue);
 }
