@@ -29,6 +29,7 @@ bool VkRenderer::Create()
 	CreateVkInstance();
 	PickPhysicalDevice();
 	CreateLogicalDevice();
+	CreateSwapchain();
 
 	std::cout << "Success\n";
 	return true;
@@ -152,6 +153,31 @@ void VkRenderer::CreateLogicalDevice()
 		queueCreateInfos.push_back(queueCreateInfo);
 	}
 
+	// Device extensions
+	const std::vector<const char*> deviceExtensions =
+	{
+		VK_KHR_SWAPCHAIN_EXTENSION_NAME
+	};
+
+	{
+		uint32_t extensionCount;
+		vkEnumerateDeviceExtensionProperties(m_VkPhysicalDevice, nullptr, &extensionCount, nullptr);
+
+		std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+		vkEnumerateDeviceExtensionProperties(m_VkPhysicalDevice, nullptr, &extensionCount, availableExtensions.data());
+
+		std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
+		for (const auto& extension : availableExtensions)
+		{
+			requiredExtensions.erase(extension.extensionName);
+		}
+
+		if (!requiredExtensions.empty())
+		{
+			std::cout << "VK_KHR_SWAPCHAIN_EXTENSION_NAME" << " - not supported\n";
+		}
+	}
+
 	// Specifying device features
 	VkPhysicalDeviceFeatures deviceFeatures{};
 
@@ -161,7 +187,8 @@ void VkRenderer::CreateLogicalDevice()
 	createInfo.pQueueCreateInfos = queueCreateInfos.data();
 	createInfo.queueCreateInfoCount = (uint32_t)queueCreateInfos.size();
 	createInfo.pEnabledFeatures = &deviceFeatures;
-	createInfo.enabledExtensionCount = 0;
+	createInfo.enabledExtensionCount = (uint32_t)deviceExtensions.size();
+	createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
 	createInfo.enabledLayerCount = static_cast<uint32_t>(m_ValidationLayers.size());
 	createInfo.ppEnabledLayerNames = m_ValidationLayers.data();
@@ -169,4 +196,25 @@ void VkRenderer::CreateLogicalDevice()
 	Vk::Check(vkCreateDevice(m_VkPhysicalDevice, &createInfo, nullptr, &m_VkDevice));
 
 	vkGetDeviceQueue(m_VkDevice, m_GraphicsFamily.value(), 0, &m_VkPresentQueue);
+}
+
+void VkRenderer::CreateSwapchain()
+{
+	Vk::Check(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_VkPhysicalDevice, m_VkSurfaceKHR, &m_Capabilities));
+
+	// Get supported formats
+	uint32_t formatCount;
+	Vk::Check(vkGetPhysicalDeviceSurfaceFormatsKHR(m_VkPhysicalDevice, m_VkSurfaceKHR, &formatCount, nullptr));
+
+	m_Formats.resize(formatCount);
+	Vk::Check(vkGetPhysicalDeviceSurfaceFormatsKHR(m_VkPhysicalDevice, m_VkSurfaceKHR, &formatCount, m_Formats.data()));
+
+	// Get present mode counts
+	uint32_t presentModeCount;
+	Vk::Check(vkGetPhysicalDeviceSurfacePresentModesKHR(m_VkPhysicalDevice, m_VkSurfaceKHR, &presentModeCount, nullptr));
+
+	m_PresentModes.resize(presentModeCount);
+	Vk::Check(vkGetPhysicalDeviceSurfacePresentModesKHR(m_VkPhysicalDevice, m_VkSurfaceKHR, &presentModeCount, m_PresentModes.data()));
+
+
 }

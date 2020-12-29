@@ -38,6 +38,12 @@ private:
 	VkDevice m_VkDevice;
 	VkQueue m_VkPresentQueue;
 	void CreateLogicalDevice();
+
+	// Swapchain
+	VkSurfaceCapabilitiesKHR m_Capabilities;
+	std::vector<VkSurfaceFormatKHR> m_Formats;
+	std::vector<VkPresentModeKHR> m_PresentModes;
+	void CreateSwapchain();
 };
 
 //class VkRenderer
