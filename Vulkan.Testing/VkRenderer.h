@@ -31,11 +31,12 @@ private:
 	// Vulkan physical device
 	VkPhysicalDevice m_VkPhysicalDevice;
 	std::optional<uint32_t> m_GraphicsFamily;
+	std::optional<uint32_t> m_PresentFamily;
 	void PickPhysicalDevice();
 
 	// Vulkan device
 	VkDevice m_VkDevice;
-	VkQueue m_VkQueue;
+	VkQueue m_VkPresentQueue;
 	void CreateLogicalDevice();
 };
 

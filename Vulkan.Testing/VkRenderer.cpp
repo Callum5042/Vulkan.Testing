@@ -1,5 +1,6 @@
 #include "VkRenderer.h"
 #include <iostream>
+#include <set>
 
 namespace Vk
 {
@@ -125,18 +126,31 @@ void VkRenderer::PickPhysicalDevice()
 	{
 		std::cout << "No graphics queue found\n";
 	}
+
+	VkBool32 presentSupport = false;
+	Vk::Check(vkGetPhysicalDeviceSurfaceSupportKHR(m_VkPhysicalDevice, m_GraphicsFamily.value(), m_VkSurfaceKHR, &presentSupport));
+	if (presentSupport)
+	{
+		m_PresentFamily = m_GraphicsFamily;
+	}
 }
 
 void VkRenderer::CreateLogicalDevice()
 {
 	// Specifying the queues to be created
-	VkDeviceQueueCreateInfo queueCreateInfo{};
-	queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-	queueCreateInfo.queueFamilyIndex = m_GraphicsFamily.value();
-	queueCreateInfo.queueCount = 1;
+	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+	std::set<uint32_t> uniqueQueueFamilies = { m_GraphicsFamily.value(), m_PresentFamily.value() };
 
 	float queuePriority = 1.0f;
-	queueCreateInfo.pQueuePriorities = &queuePriority;
+	for (uint32_t queueFamily : uniqueQueueFamilies)
+	{
+		VkDeviceQueueCreateInfo queueCreateInfo{};
+		queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		queueCreateInfo.queueFamilyIndex = queueFamily;
+		queueCreateInfo.queueCount = 1;
+		queueCreateInfo.pQueuePriorities = &queuePriority;
+		queueCreateInfos.push_back(queueCreateInfo);
+	}
 
 	// Specifying device features
 	VkPhysicalDeviceFeatures deviceFeatures{};
@@ -144,8 +158,8 @@ void VkRenderer::CreateLogicalDevice()
 	// Creating the logical device
 	VkDeviceCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-	createInfo.pQueueCreateInfos = &queueCreateInfo;
-	createInfo.queueCreateInfoCount = 1;
+	createInfo.pQueueCreateInfos = queueCreateInfos.data();
+	createInfo.queueCreateInfoCount = (uint32_t)queueCreateInfos.size();
 	createInfo.pEnabledFeatures = &deviceFeatures;
 	createInfo.enabledExtensionCount = 0;
 
@@ -154,6 +168,5 @@ void VkRenderer::CreateLogicalDevice()
 
 	Vk::Check(vkCreateDevice(m_VkPhysicalDevice, &createInfo, nullptr, &m_VkDevice));
 
-	// Get queue
-	vkGetDeviceQueue(m_VkDevice, m_GraphicsFamily.value(), 0, & m_VkQueue);
+	vkGetDeviceQueue(m_VkDevice, m_GraphicsFamily.value(), 0, &m_VkPresentQueue);
 }
