@@ -73,7 +73,7 @@ int main(int argc, char** argv)
 		{
 			CalculateFPS(&timer, window);
 
-
+			renderer.DrawFrame();
 		}
 	}
 

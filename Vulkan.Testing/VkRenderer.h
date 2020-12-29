@@ -15,6 +15,7 @@ public:
 	virtual ~VkRenderer();
 
 	bool Create();
+	void DrawFrame();
 
 private:
 	SDL_Window* m_Window = nullptr;
@@ -36,6 +37,7 @@ private:
 
 	// Vulkan device
 	VkDevice m_VkDevice;
+	VkQueue graphicsQueue;
 	VkQueue m_VkPresentQueue;
 	void CreateLogicalDevice();
 
@@ -76,4 +78,10 @@ private:
 	// Command buffers
 	std::vector<VkCommandBuffer> m_CommandBuffers;
 	void CreateCommandBuffers();
+
+	// Drawing?
+	VkSemaphore imageAvailableSemaphore;
+	VkSemaphore renderFinishedSemaphore;
+
+	void CreateSemaphores();
 };
